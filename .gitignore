@@ -9,3 +9,4 @@ coverage
 *.test
 *.debug
 .rollup.cache
+test.js

@@ -11,18 +11,22 @@ test.group('PandoLogger', (group) => {
     socket.bind(1835)
   })
   group.teardown(async () => {
-    socket.close()
+    await new Promise((resolve) => {
+      socket.close(() => resolve(void 0))
+    })
   })
 
   test('Able to create a logger instance', ({ assert }) => {
     const logger = make('test')
     assert.instanceOf(logger, winston.Logger)
+    logger.end()
   })
 
   test('Able to log a message', async ({ assert }) => {
     let timeout: NodeJS.Timeout | undefined
     const promised = new Promise((resolve, reject) => {
       socket.once('message', (msg) => {
+        clearTimeout(timeout)
         resolve(msg)
       })
       timeout = setTimeout(() => {
@@ -35,9 +39,9 @@ test.group('PandoLogger', (group) => {
     try {
       message = (await promised) as Buffer
     } catch (error) {
-      clearTimeout(timeout)
       assert.fail(error.message)
     }
+    logger.end()
     clearTimeout(timeout)
     assert.instanceOf(message, Buffer)
     const deserialized = deserialize(message!)
